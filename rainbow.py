@@ -25,7 +25,7 @@ async def on_ready():
                     colours = random.randint(0, 0xFFFFFF)
                     await client.edit_role(server=server2, role=role, colour=discord.Colour(colours))
                     await asyncio.sleep(5)
-                    await client.change_presence(game=discord.Game(name=random.choice(statuses)))
+                    await client.change_presence(game=discord.Game(name="Rainbow bot By.: FightMan01"))
                 except Exception as e:
                     print(e)
                     await client.change_presence(game=discord.Game(name="Rainbow bot By.: FightMan01"))
