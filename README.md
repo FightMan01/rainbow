@@ -1,0 +1,2 @@
+# rainbow
+Multicolor discord bot.
