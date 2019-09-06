@@ -3,6 +3,7 @@ Multicolor discord bot.
 
 # Hogyan használdd?
 Telepítsd a számítógépedre a Python nevű programot! A verzió lehetőleg 3.6.8 legyen.
+**FONTOS** Az első ablakban telepítésnél alul legyen bepipálva az `Add Python xy to PATH` opció!
 
 # Mik szükségesek pip-pel?
 Minden szükséges modult a requirements.txt tartalmazza. 
