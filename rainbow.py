@@ -1,4 +1,3 @@
-from discord import Game
 import aiohttp
 import os
 import random
