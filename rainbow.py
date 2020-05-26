@@ -1,50 +1,115 @@
-import aiohttp
-import os
-import random
+#Importok...
 import discord
-from discord.ext import commands
-from discord.ext.commands import Bot
 import asyncio
-from discord.utils import find
+from discord.ext import commands
 import datetime
+import threading
+import json
+import random
 
+#Alap dolgok....
 client = commands.Bot(command_prefix=".")
-Client = discord.Client()
 client.remove_command('help')
+
+#Adatbázis betöltése
+with open("szinek.json") as f:
+    szinek = json.load(f)
 
 @client.event
 async def on_ready():
+    #Játék beállítása
     jatek = discord.Game("Rainbow bot By.: FightMan01")
     await client.change_presence(activity=jatek)
-    try:
-        #Adatok bekérése
-        rangid = "rang id-ja"
-        szerverid = "szerver id-ja"
-        #Szerver lekérése
-        server2 = client.get_guild(id=int(szerverid))
-        while True:
-            #Rang lekérése
-            role = discord.utils.get(server2.roles, id=int(rangid))
-            try:
-                #Rang frissítő rendszer
-                colours = random.randint(0, 0xFFFFFF)
-                await role.edit(colour=discord.Colour(colours), reason="Rainbow bot by: FightMan01")
-                #5 másodperc várakozás. Lehet nagyobbra is rakni, de kisebbre nem érdemes, mert a bot API bant kaphat.
-                await asyncio.sleep(5)
-                #Rendszer vége, ez alatt a hiba kezelő rendszer van.
-            except Exception as e:
-                #Hiba kiiratása
-                print(f"Hiba történt: {e}")
-                #Itt is 5 másodperc várakozás, hogy hiba esetén se ugorjon egyből vissza, mert API bant kaphat a bot.
-                await asyncio.sleep(5)
-                #Egyszerűen csak folytatódik a rendszer.
-                continue
-    except:
-        pass
+    print("[INFO] ~> Szerverek betöltése...")
+    #For ciklus a szálak indítására
+    for x in szinek:
+        print(f"[INFO] ~> {x} regisztrálva!")
+        #Szál készítése a szervernek
+        th = threading.Thread(target = lambda: színváltó(x))
+        #Szál elindítása
+        th.start()
+        #Állapot beállítása
+        szinek[x]["fuss"] = True
+    print("[INFO] ~> Szerverek betöltve, színváltás elindul!")
 
+def színváltó(guildid):
+    #Egy kis "hack" az asynchronous folyamat futtatására (a threading natívan nem támogatja)
+    #Új loop készítése a szálnak.
+    loop = asyncio.new_event_loop()
+    #Színváltás futtatása ebben a loopban.
+    loop.run_until_complete(rain(guildid))
+
+async def rain(guildid):
+    #Egy while loop
+    while True:
+        try:
+            #A threadnek nincs leállító parancsa, azért ezt ilyen módon lehet kiküszöbölni.
+            #Ez általában KeyError lesz a delete miatt, de ritka esetben ennek az eredménye lehet False is. 
+            #Ezért alakalmaztam ezt a megoldást.
+            if szinek[str(guildid)]["fuss"] == True:
+                try:
+                    #Itt már az előző verziókból ismert dolgok.
+                    #Először a "színsorsoló". Ez választ egy színt.
+                    colours = random.randint(0, 0xFFFFFF)
+                    #Guild object lekérése
+                    guild = client.get_guild(int(guildid))
+                    #Rang ID lekérése
+                    rangid = szinek[str(guildid)]["id"]
+                    #Role object lekérése
+                    role = discord.utils.get(guild.roles, id=int(rangid))
+                    #A bothoz köthető asynchronous dolgok csak a főő loopban tudnak futni.
+                    #Ezért így kell lehívnunk a rang szerkesztése dolgot.
+                    client.loop.create_task(role.edit(colour=discord.Colour(colours), reason="Rainbow bot by: FightMan01"))
+                    #5 perc várakozás (alacsonyabbra nem érdemes rakni!)
+                    await asyncio.sleep(5)
+                except:
+                    #Hiba esetén (no perms stb...) is várunk 5 másodpercet, ezt sem érdemes kisebbre rakni.
+                    await asyncio.sleep(5)
+                    #A ciklus folytatása
+                    continue
+            else:
+                break
+        except:
+            break
+
+#Beállító parancs (alapból: .rainbow [be/ki] [rang])
 @client.command()
-async def help(ctx):
-    embed = discord.Embed(title="Rainbow bot", description="Készítette: FightMan01", color=0x00ff00, timestamp=datetime.datetime.utcnow())
-    await ctx.send(embed=embed)
+async def rainbow(ctx, state, *, role:discord.Role=None):
+    if ctx.author.bot:
+        return
+    #Az állapotát érdemes kisbetűssé konvertálni.
+    state = state.lower()
+    #Egy kis "wrapper", hogy angolul is meg lehessen adni.
+    if state == "on":
+        state = "be"
+    if state == "off":
+        state = "ki"
+    #Ellenőrizzük, hogy nem adtak-e meg hülyeséget.
+    if not (state == "be" or state == "ki"):
+        return await ctx.send(":x: A beállítás csak `be` és `ki` lehet.")
+    if state == "be":
+        #Ha bekapcsolni szeretnénk...
+        if not role:
+            #Ha nincs rang megadva, adjunk vissza hibát.
+            return await ctx.send(":x: Kérlek add meg a rangot!\nHasználat: **.rainbow [be/ki] [@rang]**")
+        #Adatbázis előkészítése, adatok rögzítése
+        szinek[str(ctx.guild.id)] = {}
+        szinek[str(ctx.guild.id)]["id"] = str(role.id)
+        szinek[str(ctx.guild.id)]["fuss"] = True
+        #Szál készítése ennek a szervernek is...
+        th = threading.Thread(target = lambda: színváltó(str(ctx.guild.id)))
+        #Szál elindítása
+        th.start()
+        await ctx.send(":white_check_mark: A színváltás elkezdődött!")
+    else:
+        #Egyéb esetben (ki)...
+        #Folyamat megszakítása (ha éppen most akarna színt váltani)
+        szinek[str(ctx.guild.id)]["fuss"] = False
+        #Szerver törlése az adatbázisból.
+        del szinek[str(ctx.guild.id)]
+        await ctx.send(":white_check_mark: Sikeres törlés!")
+    #A változtatások fájlba írása.
+    with open("szinek.json", "w") as f2:
+        json.dump(szinek, f2)
 
 client.run("TOKEN")
