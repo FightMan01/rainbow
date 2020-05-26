@@ -12,5 +12,5 @@ Minden szükséges modult a requirements.txt tartalmazza.
 Ingyenes hostingra a heroku-t ajánlom (bár az az egyetlen). Ha egyben letöltöd ezt a repo-t, akkor már heroku készre kapod meg :)
 
 # További botom
-Egy további botom van: https://fightman01bot.ml/invite
+Egy további botom van: https://fightman01bot.hu/invite
 Sok helyen testreszabható bot, ajánlom mindenkinek ;)
