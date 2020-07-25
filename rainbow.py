@@ -57,10 +57,10 @@ async def rain(guildid):
                     rangid = szinek[str(guildid)]["id"]
                     #Role object lekérése
                     role = discord.utils.get(guild.roles, id=int(rangid))
-                    #A bothoz köthető asynchronous dolgok csak a főő loopban tudnak futni.
+                    #A bothoz köthető asynchronous dolgok csak a fő loopban tudnak futni.
                     #Ezért így kell lehívnunk a rang szerkesztése dolgot.
                     client.loop.create_task(role.edit(colour=discord.Colour(colours), reason="Rainbow bot by: FightMan01"))
-                    #5 perc várakozás (alacsonyabbra nem érdemes rakni!)
+                    #5 másodperc várakozás (alacsonyabbra nem érdemes rakni!)
                     await asyncio.sleep(5)
                 except:
                     #Hiba esetén (no perms stb...) is várunk 5 másodpercet, ezt sem érdemes kisebbre rakni.
