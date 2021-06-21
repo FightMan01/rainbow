@@ -62,7 +62,8 @@ async def rain(guildid):
                     client.loop.create_task(role.edit(colour=discord.Colour(colours), reason="Rainbow bot by: FightMan01"))
                     #5 másodperc várakozás (alacsonyabbra nem érdemes rakni!)
                     await asyncio.sleep(5)
-                except:
+                except Exception as e:
+                    print(f"[HIBA] ~> {e}")
                     #Hiba esetén (no perms stb...) is várunk 5 másodpercet, ezt sem érdemes kisebbre rakni.
                     await asyncio.sleep(5)
                     #A ciklus folytatása
